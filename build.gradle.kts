@@ -46,3 +46,15 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+publishing {
+    publications {
+        create<MavenPublication>("Release") {
+            groupId = project.group as String
+            artifactId = project.name
+            version = project.version as String
+
+            from(components["kotlin"])
+        }
+    }
+}
