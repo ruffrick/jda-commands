@@ -31,7 +31,7 @@ class CommandRegistry(private val commands: List<SlashCommand>) {
         Long::class to OptionType.INTEGER,
         Boolean::class to OptionType.BOOLEAN,
         User::class to OptionType.USER,
-        AbstractChannel::class to OptionType.CHANNEL,
+        GuildChannel::class to OptionType.CHANNEL,
         Role::class to OptionType.ROLE
     )
 
