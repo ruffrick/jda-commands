@@ -1,6 +1,8 @@
-# JDA Slash Command Framework
+[1]: https://github.com/DV8FromTheWorld/JDA/
 
-This is an easy to use, annotation-based slash command framework for the popular Discord API wrapper JDA.
+# JDA-Commands
+
+JDA-Commands is an easy to use, annotation-based slash command framework for the popular Discord API wrapper [JDA][1].
 
 ## Examples
 
@@ -13,7 +15,7 @@ To create a command, simply create a class extending `SlashCommand` and annotate
 class PingCommand : SlashCommand() {
 
     @BaseCommand
-    fun ping(event: SlashCommandEvent) { // This would be registered as `/ping`
+    fun ping(event: SlashCommandEvent) { // This is registered as `/ping`
         event.reply("Pong!").queue()
     }
 
@@ -21,12 +23,12 @@ class PingCommand : SlashCommand() {
 ```
 
 If no name is specified in the `@Command` annotation, the command name is parsed from the class name by removing the
-suffix `Command`. The `@BaseCommand` is used to create a single, top-level command. No additional name is required.
+`Command` suffix. The `@BaseCommand` is used to create a single, top-level command. No additional name is required.
 
-To create more complex commands with subcommands and -groups, use the `@SubCommand` annotation instead of `@BaseCommand`
-. As with the command name, subcommand names are parsed from the function name the annotation is attached to, unless a
-name is specified in the annotation. To group multiple subcommands in a group, specify the `group` parameter in the
-annotation.
+To create more complex commands with subcommands and -groups, use the `@SubCommand` annotation instead of
+`@BaseCommand`. As with the command name, subcommand names are parsed from the function name the annotation is attached
+to, unless a name is specified in the annotation. To group multiple subcommands in a group, specify the `group`
+parameter in the annotation.
 
 ```kotlin
 @Command
@@ -75,8 +77,8 @@ annotated as `@Command`, which are then instantiated. **This only works for comm
 parameters!** The commands are then scanned for functions annotated as either `@BaseCommand` or `@SubCommand`, which are
 then registered as commands based on their annotations and parameters. This also calls `updateCommands()` with the
 registered commands on the JDA or ShardManager instance this was called on after registering the commands. The function
-returns a CommandRegistry instance containing all of the registered commands, which can be used to register the commands
-in a guild for development purposes.
+returns a CommandRegistry instance containing the registered commands, which can be used to register the commands in a
+guild for development purposes.
 
 ```kotlin
 fun main() {
