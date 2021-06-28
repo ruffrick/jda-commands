@@ -72,8 +72,8 @@ class GreetCommand : SlashCommand() {
 ```
 
 To register the commands, call `registerCommands()` on your JDA or ShardManager instance. This function takes either a
-list of commands, or a package name and an optional ClassLoader, in which case the package is scanned for classes
-annotated as `@Command`, which are then instantiated. **This only works for classes which don't require any constructor
+list of commands, or a package name and an optional ClassLoader, in which case the package is scanned for subtypes of
+SlashCommand, which are then instantiated. **This only works for classes which don't require any constructor
 parameters!**
 
 After registering the commands, this calls `updateCommands()` on the JDA or ShardManager instance it was called on. The

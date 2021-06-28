@@ -3,7 +3,10 @@ package dev.ruffrick.jda.commands
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -19,7 +22,9 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberFunctions
 
-class CommandRegistry(private val commands: List<SlashCommand>) {
+class CommandRegistry(
+    private val commands: List<SlashCommand>
+) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
     private val descriptions = Json.decodeFromString<Map<String, String>>(

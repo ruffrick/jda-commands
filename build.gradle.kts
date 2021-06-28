@@ -2,10 +2,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    kotlin("jvm") version "1.5.10"
+    kotlin("jvm") version "1.5.20"
 
     // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization
-    kotlin("plugin.serialization") version "1.5.10"
+    kotlin("plugin.serialization") version "1.5.20"
 
     `maven-publish`
 }
@@ -32,7 +32,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
 
     // https://github.com/DV8FromTheWorld/JDA/
-    implementation("net.dv8tion:JDA:4.3.0_280") {
+    implementation("net.dv8tion:JDA:4.3.0_285") {
         exclude("opus-java")
     }
 
