@@ -161,7 +161,7 @@ class CommandRegistry(
     }
 
     fun updateCommands(shardManager: ShardManager) {
-        shardManager.shards.forEach {
+        shardManager.shardCache.forEach {
             updateCommands(it)
         }
     }
