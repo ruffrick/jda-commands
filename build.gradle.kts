@@ -32,12 +32,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
 
     // https://github.com/DV8FromTheWorld/JDA/
-    implementation("net.dv8tion:JDA:4.3.0_285") {
-        exclude("opus-java")
-    }
-
-    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    implementation("org.slf4j:slf4j-api:1.7.31")
+    compileOnly("net.dv8tion:JDA:4.3.0_285")
 
     // https://mvnrepository.com/artifact/org.reflections/reflections
     implementation("org.reflections:reflections:0.9.12")
