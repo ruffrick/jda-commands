@@ -1,20 +1,22 @@
-package dev.ruffrick.jda.commands.event.button
+package dev.ruffrick.jda.commands.event
 
 import dev.ruffrick.jda.commands.CommandRegistry
+import dev.ruffrick.jda.kotlinx.event.SuspendEventListener
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
-import org.slf4j.LoggerFactory
 import kotlin.reflect.full.callSuspend
 import kotlin.system.measureTimeMillis
 
 internal class ButtonClickListener(
     private val commandRegistry: CommandRegistry
-) {
+) : SuspendEventListener() {
 
     private val start = System.currentTimeMillis()
-    private val log = LoggerFactory.getLogger(this::class.java)
 
-    suspend fun onEvent(event: ButtonClickEvent) {
+    override suspend fun onEvent(event: GenericEvent) {
+        if (event !is ButtonClickEvent) return
+
         if ((event.messageIdLong shr 22) + 1420070400000 < start) return
 
         val (commandName, buttonId, userId) = event.componentId.split('.').takeIf { it.size == 3 }

@@ -1,8 +1,7 @@
 package dev.ruffrick.jda.commands
 
-import dev.ruffrick.jda.commands.event.CommandListener
-import dev.ruffrick.jda.commands.event.button.ButtonClickListener
-import dev.ruffrick.jda.commands.event.command.SlashCommandListener
+import dev.ruffrick.jda.commands.event.ButtonClickListener
+import dev.ruffrick.jda.commands.event.SlashCommandListener
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.reflections.Reflections
@@ -15,10 +14,8 @@ fun ShardManager.registerCommands(`package`: String, classLoader: ClassLoader = 
 fun ShardManager.registerCommands(commands: List<SlashCommand>) = CommandRegistry(commands).also {
     it.updateCommands(this)
     addEventListener(
-        CommandListener(
-            SlashCommandListener(it),
-            ButtonClickListener(it)
-        )
+        SlashCommandListener(it),
+        ButtonClickListener(it)
     )
 }
 
@@ -28,10 +25,8 @@ fun JDA.registerCommands(`package`: String, classLoader: ClassLoader = this::cla
 fun JDA.registerCommands(commands: List<SlashCommand>) = CommandRegistry(commands).also {
     it.updateCommands(this)
     addEventListener(
-        CommandListener(
-            SlashCommandListener(it),
-            ButtonClickListener(it)
-        )
+        SlashCommandListener(it),
+        ButtonClickListener(it)
     )
 }
 

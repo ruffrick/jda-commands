@@ -1,9 +1,8 @@
 package dev.ruffrick.jda.commands
 
+import dev.ruffrick.jda.kotlinx.Logger
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 abstract class SlashCommand {
 
@@ -12,6 +11,6 @@ abstract class SlashCommand {
     lateinit var commandRegistry: CommandRegistry
     lateinit var commandData: CommandData
 
-    protected val log: Logger = LoggerFactory.getLogger(this::class.java)
+    protected val log by Logger
 
 }

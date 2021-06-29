@@ -1,24 +1,25 @@
-package dev.ruffrick.jda.commands.event.command
+package dev.ruffrick.jda.commands.event
 
 import dev.ruffrick.jda.commands.CommandRegistry
 import dev.ruffrick.jda.commands.CommandScope
 import dev.ruffrick.jda.commands.SlashCommand
-import dev.ruffrick.jda.commands.util.extension.await
+import dev.ruffrick.jda.kotlinx.await
+import dev.ruffrick.jda.kotlinx.event.SuspendEventListener
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import org.slf4j.LoggerFactory
 import kotlin.reflect.full.callSuspend
 import kotlin.system.measureTimeMillis
 
 internal class SlashCommandListener(
     private val commandRegistry: CommandRegistry
-) {
+) : SuspendEventListener() {
 
-    private val log = LoggerFactory.getLogger(this::class.java)
+    override suspend fun onEvent(event: GenericEvent) {
+        if (event !is SlashCommandEvent) return
 
-    suspend fun onEvent(event: SlashCommandEvent) {
         val command = commandRegistry.commandsByName[event.name]
             ?: throw IllegalArgumentException("Invalid command: name='${event.name}'")
 

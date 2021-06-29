@@ -1,8 +1,10 @@
 [1]: https://github.com/DV8FromTheWorld/JDA/
+[2]: https://github.com/ruffrick/jda-kotlinx
 
 # JDA-Commands
 
 JDA-Commands is an easy to use, annotation-based slash command framework for the popular Discord API wrapper [JDA][1].
+This bundles [jda-kotlinx][2] to add coroutine support for suspending event listeners.
 
 ## Examples
 
@@ -82,7 +84,9 @@ commands in a guild for development purposes.
 
 ```kotlin
 fun main() {
-    val jda = JDABuilder.createLight("token").build()
+    val jda = JDABuilder.createLight("token")
+        .useSuspendEventManager()
+        .build()
     val commandRegistry = jda.registerCommands(
         listOf(
             PingCommand(),
