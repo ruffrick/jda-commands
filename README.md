@@ -151,7 +151,7 @@ require any additional setup, other than registering the command they belong to 
 
 ### Type Mapping
 
-You can add support for custom types for both commands end buttons.
+You can add support for custom types for both commands and buttons.
 
 ```kotlin
 class DurationMapper : StringMapper<Duration> {
