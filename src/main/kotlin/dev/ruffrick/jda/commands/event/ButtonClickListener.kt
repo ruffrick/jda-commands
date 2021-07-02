@@ -43,7 +43,13 @@ internal class ButtonClickListener(
                 if (type == ButtonClickEvent::class) {
                     event
                 } else {
-                    commandRegistry.mapperRegistry.buttonEventMappers[type]!!.transform(event)
+                    try {
+                        commandRegistry.mapperRegistry.buttonEventMappers[type]!!.transform(event)
+                    } catch (e: IllegalArgumentException) {
+                        return event.replyEmbeds(
+                            EmbedBuilder().setDescription(e.message ?: "Something went wrong \uD83D\uDE15").build()
+                        ).setEphemeral(true).queue()
+                    }
                 }
             }
 
