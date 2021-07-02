@@ -1,4 +1,5 @@
 [1]: https://github.com/DV8FromTheWorld/JDA/
+
 [2]: https://github.com/ruffrick/jda-kotlinx
 
 # JDA-Commands
@@ -175,6 +176,9 @@ class DurationMapper : StringMapper<Duration> {
 
 }
 ```
+
+If an IllegalArgumentException is thrown while mapping, it's message will be replied to the
+SlashCommand-/ButtonClickEvent, and the command/button will not be executed.
 
 There are mapper interfaces for all supported option types: `StringMapper`, `LongMapper`, `BooleanMapper`, `UserMapper`,
 `ChannelMapper`, `RoleMapper`, as well as CommandEventMapper and ButtonEventMapper. These take their respective types as
