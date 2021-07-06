@@ -14,29 +14,16 @@ class MapperRegistry(
     buttonEventMappers: List<ButtonEventMapper<*>> = listOf()
 ) {
 
-    val stringMappers = stringMappers.associateBy { mapper ->
+    val stringMappers = stringMappers.associateBy { returnType(it) }
+    val longMappers = longMappers.associateBy { returnType(it) }
+    val booleanMappers = booleanMappers.associateBy { returnType(it) }
+    val userMappers = userMappers.associateBy { returnType(it) }
+    val channelMappers = channelMappers.associateBy { returnType(it) }
+    val roleMappers = roleMappers.associateBy { returnType(it) }
+    val commandEventMappers = commandEventMappers.associateBy { returnType(it) }
+    val buttonEventMappers = buttonEventMappers.associateBy { returnType(it) }
+
+    private fun <S, T> returnType(mapper: Mapper<S, T>) =
         mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val longMappers = longMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val booleanMappers = booleanMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val userMappers = userMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val channelMappers = channelMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val roleMappers = roleMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val commandEventMappers = commandEventMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
-    val buttonEventMappers = buttonEventMappers.associateBy { mapper ->
-        mapper::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
-    }
 
 }
