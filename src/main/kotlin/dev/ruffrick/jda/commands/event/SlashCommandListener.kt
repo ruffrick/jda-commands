@@ -82,22 +82,22 @@ internal class SlashCommandListener(
                     User::class -> event.getOption(name)?.asUser
                     GuildChannel::class -> event.getOption(name)?.asGuildChannel
                     Role::class -> event.getOption(name)?.asRole
-                    else -> event.getOption(name)?.let {
-                        try {
-                            when (it.type) {
+                    else -> event.getOption(name)?.let { option ->
+                        if (type.java.isEnum) type.java.enumConstants.first { (it as Enum<*>).name == option.asString } else try {
+                            when (option.type) {
                                 OptionType.STRING ->
-                                    commandRegistry.mapperRegistry.stringMappers[type]!!.transform(it.asString)
+                                    commandRegistry.mapperRegistry.stringMappers[type]!!.transform(option.asString)
                                 OptionType.INTEGER ->
-                                    commandRegistry.mapperRegistry.longMappers[type]!!.transform(it.asLong)
+                                    commandRegistry.mapperRegistry.longMappers[type]!!.transform(option.asLong)
                                 OptionType.BOOLEAN ->
-                                    commandRegistry.mapperRegistry.booleanMappers[type]!!.transform(it.asBoolean)
+                                    commandRegistry.mapperRegistry.booleanMappers[type]!!.transform(option.asBoolean)
                                 OptionType.USER ->
-                                    commandRegistry.mapperRegistry.userMappers[type]!!.transform(it.asUser)
+                                    commandRegistry.mapperRegistry.userMappers[type]!!.transform(option.asUser)
                                 OptionType.CHANNEL ->
-                                    commandRegistry.mapperRegistry.channelMappers[type]!!.transform(it.asGuildChannel)
+                                    commandRegistry.mapperRegistry.channelMappers[type]!!.transform(option.asGuildChannel)
                                 OptionType.ROLE ->
-                                    commandRegistry.mapperRegistry.roleMappers[type]!!.transform(it.asRole)
-                                else -> throw IllegalStateException("Invalid option type: ${it.type}")
+                                    commandRegistry.mapperRegistry.roleMappers[type]!!.transform(option.asRole)
+                                else -> throw IllegalStateException("Invalid option type: ${option.type}")
                             }
                         } catch (e: IllegalArgumentException) {
                             return event.replyEmbeds(

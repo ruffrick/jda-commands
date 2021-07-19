@@ -21,6 +21,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
+import net.dv8tion.jda.api.interactions.commands.Command as ICommand
 
 class CommandRegistry(
     val commands: List<SlashCommand>,
@@ -149,18 +150,28 @@ class CommandRegistry(
                 }
             } else {
                 allowNonOptions = false
-                val optionType = optionTypes[type]
-                    ?: mapperRegistry.stringMappers[type]?.let { OptionType.STRING }
-                    ?: mapperRegistry.longMappers[type]?.let { OptionType.INTEGER }
-                    ?: mapperRegistry.booleanMappers[type]?.let { OptionType.BOOLEAN }
-                    ?: mapperRegistry.userMappers[type]?.let { OptionType.USER }
-                    ?: mapperRegistry.channelMappers[type]?.let { OptionType.CHANNEL }
-                    ?: mapperRegistry.roleMappers[type]?.let { OptionType.ROLE }
-                    ?: throw IllegalArgumentException("No Mapper found for type ${type.qualifiedName}")
                 val name = commandOption.name.ifEmpty { parameter.name!!.lowercase() }
-                options.add(
-                    OptionData(optionType, name, getDescription("$root.$name"), !parameter.type.isMarkedNullable)
-                )
+                if (type.java.isEnum) {
+                    options.add(
+                        OptionData(
+                            OptionType.STRING, name, getDescription("$root.$name"), !parameter.type.isMarkedNullable
+                        ).addChoices(
+                            type.java.enumConstants.map { ICommand.Choice(it.toString(), (it as Enum<*>).name) }
+                        )
+                    )
+                } else {
+                    val optionType = optionTypes[type]
+                        ?: mapperRegistry.stringMappers[type]?.let { OptionType.STRING }
+                        ?: mapperRegistry.longMappers[type]?.let { OptionType.INTEGER }
+                        ?: mapperRegistry.booleanMappers[type]?.let { OptionType.BOOLEAN }
+                        ?: mapperRegistry.userMappers[type]?.let { OptionType.USER }
+                        ?: mapperRegistry.channelMappers[type]?.let { OptionType.CHANNEL }
+                        ?: mapperRegistry.roleMappers[type]?.let { OptionType.ROLE }
+                        ?: throw IllegalArgumentException("No Mapper found for type ${type.qualifiedName}")
+                    options.add(
+                        OptionData(optionType, name, getDescription("$root.$name"), !parameter.type.isMarkedNullable)
+                    )
+                }
             }
         }
         return options
