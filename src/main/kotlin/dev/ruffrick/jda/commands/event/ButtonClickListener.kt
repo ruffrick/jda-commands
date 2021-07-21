@@ -56,12 +56,9 @@ internal class ButtonClickListener(
             function.callSuspend(command, *args)
         }
 
-        log.debug(
-            "Button executed: " +
-                    "id='${event.componentId}', " +
-                    "userId='${event.user.id}', " +
-                    "guildId='${event.guild?.id ?: -1}', " +
-                    "durationMs='$duration'"
+        log.info(
+            "Handling button '${event.componentId}' took $duration ms " +
+                    "(userId: ${event.user.id}, guildId: ${event.guild?.id ?: -1})"
         )
     }
 
