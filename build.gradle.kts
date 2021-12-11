@@ -2,10 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    kotlin("jvm") version "1.5.20"
-
-    // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization
-    kotlin("plugin.serialization") version "1.5.20"
+    kotlin("jvm") version "1.6.10-RC"
 
     `maven-publish`
 }
@@ -15,25 +12,18 @@ version = "0.1"
 
 repositories {
     mavenCentral()
-    maven("https://m2.dv8tion.net/releases")
     maven("https://jitpack.io")
 }
 
 dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect
-    implementation(kotlin("reflect"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10-RC")
 
-    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
-
-    // https://github.com/DV8FromTheWorld/JDA/
-    compileOnly("net.dv8tion:JDA:4.3.0_287")
+    // https://mvnrepository.com/artifact/net.dv8tion/JDA
+    compileOnly("net.dv8tion:JDA:5.0.0-alpha.2")
 
     // https://github.com/ruffrick/jda-kotlinx
-    api("com.github.ruffrick:jda-kotlinx:6c048b7")
-
-    // https://mvnrepository.com/artifact/org.reflections/reflections
-    implementation("org.reflections:reflections:0.9.12")
+    api("com.github.ruffrick:jda-kotlinx:bbf027a")
 }
 
 tasks.withType<KotlinCompile> {

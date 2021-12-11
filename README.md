@@ -16,147 +16,109 @@ To create a command, simply create a class extending `SlashCommand` and annotate
 ```kotlin
 @Command
 class PingCommand : SlashCommand() {
-
-    @BaseCommand
+    @Command
     fun ping(event: SlashCommandEvent) { // This is registered as `/ping`
         event.reply("Pong!").queue()
     }
-
 }
 ```
 
 If no name is specified in the `@Command` annotation, the command name is parsed from the class name by removing the
-`Command` suffix. The `@BaseCommand` is used to create a single, top-level command. No additional name is required.
+`Command` suffix. To create a single top-level command, annotate any function in the class as `@Command`. No additional
+arguments are required in the annotation.
 
-To create more complex commands with subcommands and -groups, use the `@SubCommand` annotation instead of
-`@BaseCommand`. As with the command name, subcommand names are parsed from the function name the annotation is attached
-to, unless a name is specified in the annotation. To group multiple subcommands in a group, specify the `group`
-parameter in the annotation.
+To create more complex commands with subcommands and subcommand groups, use the `@Subcommand` annotation. To group
+multiple subcommands, specify the `group` parameter in the annotation and add a `groupDescription` to any one of the
+annotations belonging to the same group.
 
 ```kotlin
 @Command
 class HelloCommand : SlashCommand() {
-
-    @SubCommand
+    @Subcommand
     fun world(event: SlashCommandEvent) { // This is registered as `/hello world`
         event.reply("Hello world!").queue()
     }
 
-    @SubCommand
+    @Subcommand
     fun user(event: SlashCommandEvent) { // This is registered as `/hello user`
         event.reply("Hello ${event.user.name}!").queue()
     }
-
 }
 ```
 
-Command options can be added by adding parameters to the function and annotating them as `@CommandOption`. Nullable
-parameters will be registered as optional arguments, non-nullable parameters as required arguments. Allowed types are
-`String`, `Long`, `Boolean`, `User`, `GuildChannel` and `Role`.
+Command options can be added by adding parameters to the function and annotating them as `@Option`. Nullable parameters
+will be registered as optional arguments, non-nullable parameters as required arguments. Allowed types are `String`,
+`Long`, `Boolean`, `User`, `GuildChannel`, `Role` and `Double`.
 
 ```kotlin
 @Command
 class GreetCommand : SlashCommand() {
-
-    @BaseCommand
+    @Command
     fun greet(
         event: SlashCommandEvent,
-        @CommandOption user: User,
-        @CommandOption message: String?
-    ) { // This is registered as `/hello <user: User> <optional message: String>`
+        @Option user: User,
+        @Option message: String?
+    ) { // This is registered as `/greet <user: User> <optional message: String>`
         if (message == null) {
             event.reply("Greetings, ${user.name}!")
         } else {
             event.reply("Greetings, ${user.name}! $message!")
         }.queue()
     }
-
 }
 ```
 
-To register the commands, call `registerCommands()` on your JDA or ShardManager instance. This function takes either a
-list of commands, or a package name and an optional ClassLoader, in which case the package is scanned for subtypes of
-SlashCommand, which are then instantiated. **This only works for classes which don't require any constructor
-parameters!**
-
-After registering the commands, this calls `updateCommands()` on the JDA or ShardManager instance it was called on. The
-function returns a CommandRegistry instance containing the registered commands, which can be used to register the
-commands in a guild for development purposes.
+To register the commands, use `CommandRegistryBuilder` to build a command registry and then call `updateCommands()` on
+that instance to register the commands for a `ShardManager`, `JDA` or `Guild` instance.
 
 ```kotlin
 fun main() {
     val jda = JDABuilder.createLight("token")
         .useSuspendEventManager()
         .build()
-    val commandRegistry = jda.registerCommands(
-        listOf(
-            PingCommand(),
-            HelloCommand(),
-            GreetCommand()
-        )
-    )
-    // ...
-    commandRegistry.updateCommands(developmentGuild)
-}
-```
 
-The descriptions for commands and their options are read from a JSON-File located at `resources/lang/descriptions.json`.
-Entries are simple key-value pairs structured as `command.<subcommandGroup>.<subcommand>.<option>`. If this file does
-not exist or does not contain an entry for every command, subcommand, -group and option specified, the CommandRegistry
-will throw an exception while registering the commands.
+    val commandRegistry = CommandRegistryBuilder()
+        .addCommands(PingCommand(), HelloCommand(), GreetCommand())
+        .build()
 
-```json
-{
-  "ping": "Pong!",
-  "hello": "Hello!",
-  "hello.world": "Hello world!",
-  "hello.user": "Hello user!",
-  "greet": "Greet someone",
-  "greet.user": "The user to greet",
-  "greet.message": "The message to greet the user with"
+    commandRegistry.updateCommands(jda)
 }
 ```
 
 ### Buttons
 
-This library also adds functionality to handle buttons using annotated functions. For this to work, all button IDs must
-be structured as `commandName.buttonName.userId`.
+This library also adds functionality to handle buttons using annotated functions. Simply add a button to a message using
+the functions provided by `SlashCommand` and create a `@Button` function for each ID used.
 
 ```kotlin
+@Command
 class MoodCommand : SlashCommand() {
-
-    @BaseCommand
+    @Command
     fun mood(event: SlashCommandEvent) {
         event.reply("How are you?").addActionRow(
-            Button.success("${commandData.name}.good.${event.user.id}", "Good"),
-            Button.danger("${commandData.name}.bad.${event.user.id}", "Bad")
+            success("good", "Good"),
+            danger("bad", "Bad")
         ).queue()
     }
 
-    @CommandButton(private = true)
+    @Button
     fun good(event: ButtonClickEvent) {
         event.editMessage("That's good to hear!").setActionRows().queue()
     }
 
-    @CommandButton(private = true)
+    @Button
     fun bad(event: ButtonClickEvent) {
         event.editMessage("Oh no! Here, have some \uD83C\uDF68!").setActionRows().queue()
     }
-
 }
 ```
 
-The `private` field in the annotation restricts the button to only be usable by the original author of the command if
-set to true (defaults to false). The supplied `userId` is the ID of the original author. Registering buttons doesn't
-require any additional setup, other than registering the command they belong to as described above.
-
 ### Type Mapping
 
-You can add support for custom types for both commands and buttons.
+You can add support for custom types for both commands and buttons.*
 
 ```kotlin
-class DurationMapper : StringMapper<Duration> {
-
+class DurationMapper : Mapper<String, Duration> {
     private val pattern = Regex("^(\\d+)([dhms])\$").toPattern()
 
     override suspend fun transform(value: String): Duration {
@@ -173,36 +135,29 @@ class DurationMapper : StringMapper<Duration> {
             else -> throw IllegalStateException("How did we get here?")
         }
     }
-
 }
 ```
 
-If an IllegalArgumentException is thrown while mapping, it's message will be replied to the
-SlashCommand-/ButtonClickEvent, and the command/button will not be executed.
+If an `IllegalArgumentException` is thrown while mapping, it's message will be replied to the event and the
+command/button handler function will not be executed.
 
-There are mapper interfaces for all supported option types: `StringMapper`, `LongMapper`, `BooleanMapper`, `UserMapper`,
-`ChannelMapper`, `RoleMapper`, as well as CommandEventMapper and ButtonEventMapper. These take their respective types as
-input and return a custom type specified by the generic type parameter. If you use package scanning to register your
-commands, any Mappers in the specified package will be automatically registered as well. Otherwise, you can pass a
-MapperRegistry instance to `registerCommands()`.
-
-The option type for custom types is determined from the type of mapper used, i.e., a type that is mappable by a
-BooleanMapper is registered as a boolean option. For non-option function arguments, an EventMapper must be specified for
-the respective event (Command-/ButtonEventMapper).
+Allowed input types are `String`, `Long`, `Boolean`, `User`, `GuildChannel`, `Role` and `Double` as well as
+`SlashCommandEvent` and `ButtonClickEvent`. When using a non-standard type for an option within a command or button
+function, the option type will be the input type of the first mapper found to produce that type. 
 
 ```kotlin
-@BaseCommand
+@Command
 fun command(
-    context: CommandContext, // This looks for a CommandEventMapper for CommandContext
-    @CommandOption duration: Duration // This looks for some mapper for Duration
+    context: CommandContext, // Requires a Mapper<SlashCommandEvent, CommandContext>
+    @Option duration: Duration // Requires a Mapper<?, Duration>
 ) {
     // ...
 }
 
-@CommandButton
+@Button
 fun button(
-    context: ButtonContext, // This looks for a ButtonEventMapper for ButtonContext
-    someNumber: Long // This looks for a ButtonEventMapper for Long
+    context: ButtonContext, // Requires a Mapper<ButtonClickEvent, ButtonContext>
+    long: Long // Requires a Mapper<ButtonClickEvent, Long>
 ) {
     // ...
 }
