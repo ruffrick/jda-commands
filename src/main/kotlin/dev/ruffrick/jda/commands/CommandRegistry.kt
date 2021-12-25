@@ -91,7 +91,7 @@ class CommandRegistry(
                         val parameter = function.parameters[i]
                         val type = parameter.type.classifier as KClass<*>
                         require(type == ButtonClickEvent::class || mappers.any { it.input == ButtonClickEvent::class && it.output == type }) {
-                            "No ButtonEventMapper found for type ${type.qualifiedName}"
+                            "Mapper<ButtonClickEvent, ${type.simpleName}> not found"
                         }
                     }
                     buttonFunctions["$commandName.${button.id.ifEmpty { function.name.lowercase() }}"] = function
@@ -119,7 +119,7 @@ class CommandRegistry(
             val option = parameter.findAnnotation<Option>()
             if (option == null) {
                 require(allowNonOptions) {
-                    "Parameter ${parameter.name} in function " + "${function.name} must be annotated as @CommandOption!"
+                    "Parameter ${parameter.name} in function " + "${function.name} must be annotated as @Option!"
                 }
                 require(type == SlashCommandEvent::class || mappers.any { it.input == SlashCommandEvent::class && it.output == type }) {
                     "Mapper<SlashCommandEvent, ${type.simpleName}> not found"
