@@ -7,10 +7,7 @@ import dev.ruffrick.jda.commands.event.CommandListener
 import dev.ruffrick.jda.commands.mapping.Mapper
 import dev.ruffrick.jda.kotlinx.Logger
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.GuildChannel
-import net.dv8tion.jda.api.entities.Role
-import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
@@ -39,6 +36,7 @@ class CommandRegistry(
         User::class to OptionType.USER,
         GuildChannel::class to OptionType.CHANNEL,
         Role::class to OptionType.ROLE,
+        IMentionable::class to OptionType.MENTIONABLE,
         Double::class to OptionType.NUMBER,
     )
 
