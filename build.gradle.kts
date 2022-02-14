@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.6.20-M1"
 
     `maven-publish`
 }
@@ -17,13 +17,13 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20-M1")
 
     // https://mvnrepository.com/artifact/net.dv8tion/JDA
-    compileOnly("net.dv8tion:JDA:5.0.0-alpha.3")
+    compileOnly("net.dv8tion:JDA:5.0.0-alpha.5")
 
     // https://github.com/ruffrick/jda-kotlinx
-    api("com.github.ruffrick:jda-kotlinx:d1b7c18")
+    api("com.github.ruffrick:jda-kotlinx:27a8667")
 }
 
 tasks.withType<KotlinCompile> {

@@ -8,14 +8,11 @@ import dev.ruffrick.jda.commands.mapping.Mapper
 import dev.ruffrick.jda.kotlinx.Logger
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import net.dv8tion.jda.api.interactions.commands.build.CommandData
-import net.dv8tion.jda.api.interactions.commands.build.OptionData
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
+import net.dv8tion.jda.api.interactions.commands.build.*
 import net.dv8tion.jda.api.sharding.ShardManager
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -55,8 +52,10 @@ class CommandRegistry(
             val commandName = commandAnnotation.name.ifEmpty {
                 command::class.simpleName!!.removeSuffix("Command").lowercase()
             }
-            val commandData = CommandData(commandName, commandAnnotation.description.ifEmpty { commandName })
+            val commandData = Commands.slash(commandName, commandAnnotation.description.ifEmpty { commandName })
             val subcommandGroups = mutableListOf<SubcommandGroupData>()
+
+
 
             for (function in command::class.memberFunctions) {
                 function.findAnnotation<Command>()?.let {
@@ -90,8 +89,8 @@ class CommandRegistry(
                     for (i in 1 until function.parameters.size) {
                         val parameter = function.parameters[i]
                         val type = parameter.type.classifier as KClass<*>
-                        require(type == ButtonClickEvent::class || mappers.any { it.input == ButtonClickEvent::class && it.output == type }) {
-                            "Mapper<ButtonClickEvent, ${type.simpleName}> not found"
+                        require(type == ButtonInteractionEvent::class || mappers.any { it.input == ButtonInteractionEvent::class && it.output == type }) {
+                            "Mapper<ButtonInteractionEvent, ${type.simpleName}> not found"
                         }
                     }
                     buttonFunctions["$commandName.${button.id.ifEmpty { function.name.lowercase() }}"] = function
@@ -121,8 +120,8 @@ class CommandRegistry(
                 require(allowNonOptions) {
                     "Parameter ${parameter.name} in function " + "${function.name} must be annotated as @Option!"
                 }
-                require(type == SlashCommandEvent::class || mappers.any { it.input == SlashCommandEvent::class && it.output == type }) {
-                    "Mapper<SlashCommandEvent, ${type.simpleName}> not found"
+                require(type == SlashCommandInteractionEvent::class || mappers.any { it.input == SlashCommandInteractionEvent::class && it.output == type }) {
+                    "Mapper<SlashCommandInteractionEvent, ${type.simpleName}> not found"
                 }
             } else {
                 allowNonOptions = false
