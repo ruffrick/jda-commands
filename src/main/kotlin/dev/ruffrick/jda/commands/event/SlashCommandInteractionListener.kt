@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.callSuspend
 import kotlin.system.measureTimeMillis
 
-internal class CommandListener(
+internal class SlashCommandInteractionListener(
     private val commandRegistry: CommandRegistry
 ) : SuspendEventListener() {
 

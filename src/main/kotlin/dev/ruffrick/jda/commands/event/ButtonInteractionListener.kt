@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.callSuspend
 import kotlin.system.measureTimeMillis
 
-internal class ButtonListener(
+internal class ButtonInteractionListener(
     private val commandRegistry: CommandRegistry
 ) : SuspendEventListener() {
 

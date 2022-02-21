@@ -2,8 +2,9 @@
 
 package dev.ruffrick.jda.commands
 
-import dev.ruffrick.jda.commands.event.ButtonListener
-import dev.ruffrick.jda.commands.event.CommandListener
+import dev.ruffrick.jda.commands.annotations.*
+import dev.ruffrick.jda.commands.event.ButtonInteractionListener
+import dev.ruffrick.jda.commands.event.SlashCommandInteractionListener
 import dev.ruffrick.jda.commands.mapping.Mapper
 import dev.ruffrick.jda.kotlinx.Logger
 import net.dv8tion.jda.api.JDA
@@ -12,7 +13,11 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import net.dv8tion.jda.api.interactions.commands.build.*
+import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
+import net.dv8tion.jda.api.interactions.commands.privileges.CommandPrivilege
 import net.dv8tion.jda.api.sharding.ShardManager
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -37,25 +42,25 @@ class CommandRegistry(
         Double::class to OptionType.NUMBER,
     )
 
-    internal val commandFunctions: Map<String, Pair<KFunction<*>, List<String>>>
-    internal val buttonFunctions: Map<String, KFunction<*>>
+    internal val commandFunctions = mutableMapOf<String, Pair<KFunction<*>, List<String>>>()
+    internal val buttonFunctions = mutableMapOf<String, KFunction<*>>()
 
     init {
-        val commandFunctions = mutableMapOf<String, Pair<KFunction<*>, List<String>>>()
-        val buttonFunctions = mutableMapOf<String, KFunction<*>>()
-
         for (command in commands) {
-            val commandAnnotation = command::class.findAnnotation<Command>()
-                ?: throw IllegalArgumentException("${command::class.simpleName}: @Command annotation missing!")
+            val commandAnnotation = command::class.findAnnotation<Command>() ?: continue
 
+            val commandPrivileges = mutableMapOf<Long, List<CommandPrivilege>>()
+            command::class.annotations.filterIsInstance<Privileges>().forEach { privileges ->
+                commandPrivileges[privileges.guildId] =
+                    privileges.privileges.map { CommandPrivilege(it.type, it.enabled, it.id) }
+            }
+            command.commandPrivileges = commandPrivileges
 
             val commandName = commandAnnotation.name.ifEmpty {
                 command::class.simpleName!!.removeSuffix("Command").lowercase()
             }
             val commandData = Commands.slash(commandName, commandAnnotation.description.ifEmpty { commandName })
             val subcommandGroups = mutableListOf<SubcommandGroupData>()
-
-
 
             for (function in command::class.memberFunctions) {
                 function.findAnnotation<Command>()?.let {
@@ -99,13 +104,10 @@ class CommandRegistry(
             if (subcommandGroups.isNotEmpty()) {
                 commandData.addSubcommandGroups(subcommandGroups)
             }
+            commandData.isDefaultEnabled = commandAnnotation.enabled
             command.commandRegistry = this
             command.commandData = commandData
         }
-
-        this.commandFunctions = commandFunctions
-        this.buttonFunctions = buttonFunctions
-
         log.info("Registered ${commandFunctions.size} commands and ${buttonFunctions.size} buttons")
     }
 
@@ -157,7 +159,9 @@ class CommandRegistry(
     fun updateCommands(shardManager: ShardManager) {
         if (firstUpdate) {
             firstUpdate = false
-            shardManager.addEventListener(CommandListener(this), ButtonListener(this))
+            shardManager.addEventListener(
+                SlashCommandInteractionListener(this), ButtonInteractionListener(this)
+            )
         }
         shardManager.shardCache.forEach { updateCommands(it) }
     }
@@ -165,16 +169,32 @@ class CommandRegistry(
     fun updateCommands(jda: JDA) {
         if (firstUpdate) {
             firstUpdate = false
-            jda.addEventListener(CommandListener(this), ButtonListener(this))
+            jda.addEventListener(
+                SlashCommandInteractionListener(this), ButtonInteractionListener(this)
+            )
         }
-        jda.updateCommands().addCommands(commands.map { it.commandData }).queue()
+        jda.updateCommands().addCommands(commands.map { it.commandData }).queue { commands ->
+            commands.forEach { command ->
+                this.commands.first { it.commandData.name == command.name }.commandPrivileges.forEach { (guildId, privileges) ->
+                    command.updatePrivileges(jda.getGuildById(guildId)!!, privileges).queue()
+                }
+            }
+        }
     }
 
     fun updateCommands(guild: Guild) {
         if (firstUpdate) {
             firstUpdate = false
-            guild.jda.addEventListener(CommandListener(this), ButtonListener(this))
+            guild.jda.addEventListener(
+                SlashCommandInteractionListener(this), ButtonInteractionListener(this)
+            )
         }
-        guild.updateCommands().addCommands(commands.map { it.commandData }).queue()
+        guild.updateCommands().addCommands(commands.map { it.commandData }).queue { commands ->
+            commands.forEach { command ->
+                this.commands.first { it.commandData.name == command.name }.commandPrivileges.forEach { (guildId, privileges) ->
+                    command.updatePrivileges(guild.jda.getGuildById(guildId)!!, privileges).queue()
+                }
+            }
+        }
     }
 }
