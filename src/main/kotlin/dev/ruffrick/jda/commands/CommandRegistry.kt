@@ -6,7 +6,7 @@ import dev.ruffrick.jda.commands.annotations.*
 import dev.ruffrick.jda.commands.event.ButtonInteractionListener
 import dev.ruffrick.jda.commands.event.SlashCommandInteractionListener
 import dev.ruffrick.jda.commands.mapping.Mapper
-import dev.ruffrick.jda.kotlinx.Logger
+import dev.ruffrick.jda.kotlinx.LogFactory
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -30,7 +30,7 @@ class CommandRegistry(
 ) {
     private var firstUpdate = true
 
-    private val log by Logger
+    private val log by LogFactory
     private val optionTypes = mapOf(
         String::class to OptionType.STRING,
         Long::class to OptionType.INTEGER,
@@ -72,20 +72,21 @@ class CommandRegistry(
                     val subcommandName = subcommand.name.ifEmpty { function.name.lowercase() }
                     if (subcommand.group.isNotEmpty()) {
                         val subcommandGroupName = subcommand.group
-                        val subcommandData = SubcommandData(
-                            subcommandName,
+                        val subcommandData = SubcommandData(subcommandName,
                             subcommand.description.ifEmpty { subcommandName }).addOptions(options)
                         subcommandGroups.firstOrNull { subcommandGroupData ->
                             subcommandGroupData.name == subcommandGroupName
                         }?.addSubcommands(subcommandData) ?: subcommandGroups.add(
-                            SubcommandGroupData(subcommand.group,
+                            SubcommandGroupData(
+                                subcommand.group,
                                 subcommand.groupDescription.ifEmpty { subcommandName }).addSubcommands(subcommandData)
                         )
                         commandFunctions["$commandName.$subcommandGroupName.$subcommandName"] =
                             function to options.map { it.name }
                     } else {
                         commandData.addSubcommands(
-                            SubcommandData(subcommandName,
+                            SubcommandData(
+                                subcommandName,
                                 subcommand.description.ifEmpty { subcommandName }).addOptions(options)
                         )
                         commandFunctions["$commandName.$subcommandName"] = function to options.map { it.name }
@@ -107,8 +108,12 @@ class CommandRegistry(
             commandData.isDefaultEnabled = commandAnnotation.enabled
             command.commandRegistry = this
             command.commandData = commandData
+
+            log.info("Command $commandName registered subcommandGroups=${
+                commandData.subcommandGroups.joinToString { it.name }.ifEmpty { null }
+            } subcommands=${commandData.subcommands.joinToString { it.name }.ifEmpty { null }}"
+            )
         }
-        log.info("Registered ${commandFunctions.size} commands and ${buttonFunctions.size} buttons")
     }
 
     private fun parseOptions(function: KFunction<*>): List<OptionData> {

@@ -77,9 +77,7 @@ internal class SlashCommandInteractionListener(
             function.callSuspend(command, *eventArgs, *optionArgs)
         }
 
-        log.info(
-            "Executing command '$id' took $duration ms (userId: ${event.user.id}, guildId: ${event.guild?.id ?: -1})"
-        )
+        log.info("Command $id handled durationMs=$duration userId=${event.user.id} guildId=${event.guild?.id ?: -1}")
     }
 
 }
