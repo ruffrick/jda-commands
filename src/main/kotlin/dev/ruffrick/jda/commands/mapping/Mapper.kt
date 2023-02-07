@@ -1,9 +1,9 @@
 package dev.ruffrick.jda.commands.mapping
 
-import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberFunctions
@@ -24,7 +24,7 @@ interface Mapper<S, T> {
             Long::class -> OptionType.INTEGER
             Boolean::class -> OptionType.BOOLEAN
             User::class -> OptionType.USER
-            GuildChannel::class -> OptionType.CHANNEL
+            Channel::class -> OptionType.CHANNEL
             Role::class -> OptionType.ROLE
             IMentionable::class -> OptionType.MENTIONABLE
             Double::class -> OptionType.NUMBER
