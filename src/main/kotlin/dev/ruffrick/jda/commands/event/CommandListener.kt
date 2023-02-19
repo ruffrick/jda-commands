@@ -4,6 +4,7 @@ import dev.ruffrick.jda.commands.CommandRegistry
 import dev.ruffrick.jda.kotlinx.event.SuspendEventListener
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.GenericEvent
@@ -50,6 +51,8 @@ internal class CommandListener(
                     User::class -> event.getOption(name)?.asUser
                     GuildChannel::class -> event.getOption(name)?.asGuildChannel
                     Role::class -> event.getOption(name)?.asRole
+                    IMentionable::class -> event.getOption(name)?.asMentionable
+                    Double::class -> event.getOption(name)?.asDouble
                     else -> event.getOption(name)?.let { option ->
                         if (type.java.isEnum) type.java.enumConstants.first { (it as Enum<*>).name == option.asString } else try {
                             when (option.type) {
