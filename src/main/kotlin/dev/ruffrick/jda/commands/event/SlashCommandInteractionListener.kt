@@ -3,10 +3,10 @@ package dev.ruffrick.jda.commands.event
 import dev.ruffrick.jda.commands.CommandRegistry
 import dev.ruffrick.jda.kotlinx.event.SuspendEventListener
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -49,7 +49,7 @@ internal class SlashCommandInteractionListener(
                     Long::class -> event.getOption(name)?.asLong
                     Boolean::class -> event.getOption(name)?.asBoolean
                     User::class -> event.getOption(name)?.asUser
-                    GuildChannel::class -> event.getOption(name)?.asGuildChannel
+                    Channel::class -> event.getOption(name)?.asChannel
                     Role::class -> event.getOption(name)?.asRole
                     IMentionable::class -> event.getOption(name)?.asMentionable
                     Double::class -> event.getOption(name)?.asDouble
@@ -60,7 +60,7 @@ internal class SlashCommandInteractionListener(
                                 OptionType.INTEGER -> commandRegistry.transform(option.asLong, type)
                                 OptionType.BOOLEAN -> commandRegistry.transform(option.asBoolean, type)
                                 OptionType.USER -> commandRegistry.transform(option.asUser, type)
-                                OptionType.CHANNEL -> commandRegistry.transform(option.asGuildChannel, type)
+                                OptionType.CHANNEL -> commandRegistry.transform(option.asChannel, type)
                                 OptionType.ROLE -> commandRegistry.transform(option.asRole, type)
                                 OptionType.MENTIONABLE -> commandRegistry.transform(option.asMentionable, type)
                                 OptionType.NUMBER -> commandRegistry.transform(option.asDouble, type)

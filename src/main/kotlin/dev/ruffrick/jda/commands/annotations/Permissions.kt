@@ -1,9 +1,9 @@
 package dev.ruffrick.jda.commands.annotations
 
+import net.dv8tion.jda.api.Permission
+
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-@Repeatable
-annotation class Privileges(
-    val guildId: Long,
-    vararg val privileges: Privilege
+annotation class Permissions(
+    vararg val permissions: Permission
 )

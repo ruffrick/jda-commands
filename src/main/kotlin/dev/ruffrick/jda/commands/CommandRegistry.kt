@@ -9,19 +9,21 @@ import dev.ruffrick.jda.commands.mapping.Mapper
 import dev.ruffrick.jda.kotlinx.LogFactory
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
-import net.dv8tion.jda.api.interactions.commands.privileges.CommandPrivilege
 import net.dv8tion.jda.api.sharding.ShardManager
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberFunctions
 
 class CommandRegistry(
@@ -36,7 +38,7 @@ class CommandRegistry(
         Long::class to OptionType.INTEGER,
         Boolean::class to OptionType.BOOLEAN,
         User::class to OptionType.USER,
-        GuildChannel::class to OptionType.CHANNEL,
+        Channel::class to OptionType.CHANNEL,
         Role::class to OptionType.ROLE,
         IMentionable::class to OptionType.MENTIONABLE,
         Double::class to OptionType.NUMBER,
@@ -48,13 +50,6 @@ class CommandRegistry(
     init {
         for (command in commands) {
             val commandAnnotation = command::class.findAnnotation<Command>() ?: continue
-
-            val commandPrivileges = mutableMapOf<Long, List<CommandPrivilege>>()
-            command::class.annotations.filterIsInstance<Privileges>().forEach { privileges ->
-                commandPrivileges[privileges.guildId] =
-                    privileges.privileges.map { CommandPrivilege(it.type, it.enabled, it.id) }
-            }
-            command.commandPrivileges = commandPrivileges
 
             val commandName = commandAnnotation.name.ifEmpty {
                 command::class.simpleName!!.removeSuffix("Command").lowercase()
@@ -105,7 +100,11 @@ class CommandRegistry(
             if (subcommandGroups.isNotEmpty()) {
                 commandData.addSubcommandGroups(subcommandGroups)
             }
-            commandData.isDefaultEnabled = commandAnnotation.enabled
+
+            command::class.findAnnotation<Permissions>()?.let {
+                commandData.defaultPermissions = DefaultMemberPermissions.enabledFor(*it.permissions)
+            }
+
             command.commandRegistry = this
             command.commandData = commandData
 
@@ -178,13 +177,7 @@ class CommandRegistry(
                 SlashCommandInteractionListener(this), ButtonInteractionListener(this)
             )
         }
-        jda.updateCommands().addCommands(commands.map { it.commandData }).queue { commands ->
-            commands.forEach { command ->
-                this.commands.first { it.commandData.name == command.name }.commandPrivileges.forEach { (guildId, privileges) ->
-                    command.updatePrivileges(jda.getGuildById(guildId)!!, privileges).queue()
-                }
-            }
-        }
+        jda.updateCommands().addCommands(commands.map { it.commandData }).queue()
     }
 
     fun updateCommands(guild: Guild) {
@@ -194,12 +187,6 @@ class CommandRegistry(
                 SlashCommandInteractionListener(this), ButtonInteractionListener(this)
             )
         }
-        guild.updateCommands().addCommands(commands.map { it.commandData }).queue { commands ->
-            commands.forEach { command ->
-                this.commands.first { it.commandData.name == command.name }.commandPrivileges.forEach { (guildId, privileges) ->
-                    command.updatePrivileges(guild.jda.getGuildById(guildId)!!, privileges).queue()
-                }
-            }
-        }
+        guild.updateCommands().addCommands(commands.map { it.commandData }).queue()
     }
 }

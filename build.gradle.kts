@@ -20,10 +20,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
 
     // https://mvnrepository.com/artifact/net.dv8tion/JDA
-    compileOnly("net.dv8tion:JDA:5.0.0-alpha.9")
+    compileOnly("net.dv8tion:JDA:5.0.0-beta.3")
 
     // https://github.com/ruffrick/jda-kotlinx
-    api("com.github.ruffrick:jda-kotlinx:b19aded")
+    api("com.github.ruffrick:jda-kotlinx:fc536ec")
 }
 
 tasks.withType<KotlinCompile> {

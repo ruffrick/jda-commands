@@ -3,15 +3,13 @@
 package dev.ruffrick.jda.commands
 
 import dev.ruffrick.jda.kotlinx.LogFactory
-import net.dv8tion.jda.api.entities.Emoji
+import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
-import net.dv8tion.jda.api.interactions.commands.privileges.CommandPrivilege
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 
 abstract class SlashCommand {
     internal lateinit var commandRegistry: CommandRegistry
     internal lateinit var commandData: CommandData
-    internal lateinit var commandPrivileges: Map<Long, List<CommandPrivilege>>
 
     protected val log by LogFactory
 
