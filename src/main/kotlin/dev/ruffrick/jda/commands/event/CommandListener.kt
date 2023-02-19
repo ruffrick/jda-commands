@@ -59,6 +59,7 @@ internal class CommandListener(
                                 OptionType.USER -> commandRegistry.transform(option.asUser, type)
                                 OptionType.CHANNEL -> commandRegistry.transform(option.asGuildChannel, type)
                                 OptionType.ROLE -> commandRegistry.transform(option.asRole, type)
+                                OptionType.MENTIONABLE -> commandRegistry.transform(option.asMentionable, type)
                                 OptionType.NUMBER -> commandRegistry.transform(option.asDouble, type)
                                 else -> throw IllegalStateException("Invalid option type: ${option.type}")
                             }
