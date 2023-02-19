@@ -9,68 +9,38 @@ import org.reflections.Reflections
 import org.reflections.util.ClasspathHelper
 import org.reflections.util.ConfigurationBuilder
 
-object CommandApi {
+fun ShardManager.registerCommands(`package`: String, classLoader: ClassLoader = this::class.java.classLoader) =
+    registerCommands(loadCommands(`package`, classLoader))
 
-    fun registerCommands(
-        shardManager: ShardManager,
-        `package`: String,
-        classLoader: ClassLoader = this::class.java.classLoader
-    ): CommandRegistry {
-        return registerCommands(shardManager, loadCommands(`package`, classLoader))
-    }
-
-    fun registerCommands(shardManager: ShardManager, commands: List<SlashCommand>): CommandRegistry {
-        return CommandRegistry(commands).also {
-            it.updateCommands(shardManager)
-            shardManager.addEventListener(
-                CommandListener(
-                    SlashCommandListener(it),
-                    ButtonClickListener(it)
-                )
-            )
-        }
-    }
-
-    fun registerCommands(
-        jda: JDA,
-        `package`: String,
-        classLoader: ClassLoader = this::class.java.classLoader
-    ): CommandRegistry {
-        return registerCommands(jda, loadCommands(`package`, classLoader))
-    }
-
-    fun registerCommands(jda: JDA, commands: List<SlashCommand>): CommandRegistry {
-        return CommandRegistry(commands).also {
-            it.updateCommands(jda)
-            jda.addEventListener(
-                CommandListener(
-                    SlashCommandListener(it),
-                    ButtonClickListener(it)
-                )
-            )
-        }
-    }
-
-    private fun loadCommands(`package`: String, classLoader: ClassLoader): List<SlashCommand> {
-        val reflections = Reflections(
-            ConfigurationBuilder()
-                .addClassLoader(classLoader)
-                .addUrls(ClasspathHelper.forPackage(`package`, classLoader))
+fun ShardManager.registerCommands(commands: List<SlashCommand>) = CommandRegistry(commands).also {
+    it.updateCommands(this)
+    addEventListener(
+        CommandListener(
+            SlashCommandListener(it),
+            ButtonClickListener(it)
         )
-        return reflections.getTypesAnnotatedWith(Command::class.java)
-            .map { it.getConstructor().newInstance() as SlashCommand }
-    }
-
+    )
 }
 
-fun ShardManager.registerCommands(`package`: String, classLoader: ClassLoader = this::class.java.classLoader) =
-    CommandApi.registerCommands(this, `package`, classLoader)
-
-fun ShardManager.registerCommands(commands: List<SlashCommand>) =
-    CommandApi.registerCommands(this, commands)
-
 fun JDA.registerCommands(`package`: String, classLoader: ClassLoader = this::class.java.classLoader) =
-    CommandApi.registerCommands(this, `package`, classLoader)
+    registerCommands(loadCommands(`package`, classLoader))
 
-fun JDA.registerCommands(commands: List<SlashCommand>) =
-    CommandApi.registerCommands(this, commands)
+fun JDA.registerCommands(commands: List<SlashCommand>) = CommandRegistry(commands).also {
+    it.updateCommands(this)
+    addEventListener(
+        CommandListener(
+            SlashCommandListener(it),
+            ButtonClickListener(it)
+        )
+    )
+}
+
+private fun loadCommands(`package`: String, classLoader: ClassLoader): List<SlashCommand> {
+    val reflections = Reflections(
+        ConfigurationBuilder()
+            .addClassLoader(classLoader)
+            .addUrls(ClasspathHelper.forPackage(`package`, classLoader))
+    )
+    return reflections.getSubTypesOf(SlashCommand::class.java)
+        .map { it.getConstructor().newInstance() as SlashCommand }
+}
