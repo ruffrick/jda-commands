@@ -5,6 +5,7 @@ import dev.ruffrick.jda.kotlinx.event.SuspendEventListener
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
+import kotlin.reflect.KClass
 import kotlin.reflect.full.callSuspend
 import kotlin.system.measureTimeMillis
 
@@ -16,7 +17,6 @@ internal class ButtonClickListener(
 
     override suspend fun onEvent(event: GenericEvent) {
         if (event !is ButtonClickEvent) return
-
         if ((event.messageIdLong shr 22) + 1420070400000 < start) return
 
         val (commandName, buttonId, userId) = event.componentId.split('.').takeIf { it.size == 3 }
@@ -38,8 +38,18 @@ internal class ButtonClickListener(
         }
 
         val duration = measureTimeMillis {
-            function.callSuspend(command, event, userIdLong)
+            val args = Array(function.parameters.size - 1) {
+                val type = function.parameters[it + 1].type.classifier as KClass<*>
+                if (type == ButtonClickEvent::class) {
+                    event
+                } else {
+                    commandRegistry.mapperRegistry.buttonEventMappers[type]!!.transform(event)
+                }
+            }
+
+            function.callSuspend(command, *args)
         }
+
         log.debug(
             "Button executed: " +
                     "id='${event.componentId}', " +

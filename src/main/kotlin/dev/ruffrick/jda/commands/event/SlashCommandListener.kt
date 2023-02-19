@@ -7,9 +7,13 @@ import dev.ruffrick.jda.kotlinx.await
 import dev.ruffrick.jda.kotlinx.event.SuspendEventListener
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
+import kotlin.reflect.KClass
 import kotlin.reflect.full.callSuspend
 import kotlin.system.measureTimeMillis
 
@@ -57,24 +61,58 @@ internal class SlashCommandListener(
                         "subcommandName='${event.subcommandName}'"
             )
 
-        val args = Array(options.size) {
-            val (type, name) = options[it]
-            when (type) {
-                OptionType.STRING -> event.getOption(name)?.asString
-                OptionType.INTEGER -> event.getOption(name)?.asLong
-                OptionType.BOOLEAN -> event.getOption(name)?.asBoolean
-                OptionType.USER -> event.getOption(name)?.asUser
-                OptionType.CHANNEL -> event.getOption(name)?.asGuildChannel
-                OptionType.ROLE -> event.getOption(name)?.asRole
-                else -> throw IllegalArgumentException("Invalid option: name='$name', type='$type'")
+        val duration = measureTimeMillis {
+            val parameterOffset = function.parameters.size - options.size
+            val eventArgs = Array(parameterOffset - 1) {
+                val type = function.parameters[it + 1].type.classifier as KClass<*>
+                if (type == SlashCommandEvent::class) {
+                    event
+                } else {
+                    commandRegistry.mapperRegistry.commandEventMappers[type]!!.transform(event)
+                }
             }
+
+            val optionArgs = Array(options.size) { index ->
+                val type = function.parameters[parameterOffset + index].type.classifier as KClass<*>
+                val name = options[index]
+                when (type) {
+                    String::class -> event.getOption(name)?.asString
+                    Long::class -> event.getOption(name)?.asLong
+                    Boolean::class -> event.getOption(name)?.asBoolean
+                    User::class -> event.getOption(name)?.asUser
+                    GuildChannel::class -> event.getOption(name)?.asGuildChannel
+                    Role::class -> event.getOption(name)?.asRole
+                    else -> event.getOption(name)?.let {
+                        try {
+                            when (it.type) {
+                                OptionType.STRING ->
+                                    commandRegistry.mapperRegistry.stringMappers[type]!!.transform(it.asString)
+                                OptionType.INTEGER ->
+                                    commandRegistry.mapperRegistry.longMappers[type]!!.transform(it.asLong)
+                                OptionType.BOOLEAN ->
+                                    commandRegistry.mapperRegistry.booleanMappers[type]!!.transform(it.asBoolean)
+                                OptionType.USER ->
+                                    commandRegistry.mapperRegistry.userMappers[type]!!.transform(it.asUser)
+                                OptionType.CHANNEL ->
+                                    commandRegistry.mapperRegistry.channelMappers[type]!!.transform(it.asGuildChannel)
+                                OptionType.ROLE ->
+                                    commandRegistry.mapperRegistry.roleMappers[type]!!.transform(it.asRole)
+                                else -> throw IllegalStateException("Invalid option type: ${it.type}")
+                            }
+                        } catch (e: IllegalArgumentException) {
+                            return event.replyEmbeds(
+                                EmbedBuilder().setDescription(e.message ?: "Something went wrong \uD83D\uDE15").build()
+                            ).setEphemeral(true).queue()
+                        }
+                    }
+                }
+            }
+
+            function.callSuspend(command, *eventArgs, *optionArgs)
         }
 
-        val duration = measureTimeMillis {
-            function.callSuspend(command, event, *args)
-        }
         log.debug(
-            "Command executed: " +
+            "Executed command: " +
                     "key='$key', " +
                     "userId='${event.user.id}', " +
                     "guildId='${event.guild?.id ?: -1}', " +
@@ -88,12 +126,10 @@ internal class SlashCommandListener(
             .joinToString { "`${it.getName()}`" }
         if (missingPermissions.isNotEmpty()) {
             event.replyEmbeds(
-                EmbedBuilder()
-                    .setDescription(
-                        "You don't have the required permissions to do that! " +
-                                "You are missing the following permissions: $missingPermissions"
-                    )
-                    .build()
+                EmbedBuilder().setDescription(
+                    "You don't have the required permissions to do that! " +
+                            "You are missing the following permissions: $missingPermissions"
+                ).build()
             ).setEphemeral(true).queue()
             return false
         }
