@@ -30,7 +30,7 @@ dependencies {
     compileOnly("net.dv8tion:JDA:4.3.0_287")
 
     // https://github.com/ruffrick/jda-kotlinx
-    api("com.github.ruffrick:jda-kotlinx:c7cd4a4")
+    api("com.github.ruffrick:jda-kotlinx:6c048b7")
 
     // https://mvnrepository.com/artifact/org.reflections/reflections
     implementation("org.reflections:reflections:0.9.12")
