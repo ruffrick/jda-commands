@@ -1,35 +1,30 @@
 package dev.ruffrick.jda.commands
 
-import net.dv8tion.jda.api.Permission
-
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class Command(
     val name: String = "",
-    val scope: CommandScope = CommandScope.BOTH,
-    val requiredPermissions: Array<Permission> = []
+    val description: String = "",
 )
-
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
-annotation class BaseCommand
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 annotation class Subcommand(
     val name: String = "",
-    val group: String = ""
+    val description: String = "",
+    val group: String = "",
+    val groupDescription: String = "",
 )
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class CommandOption(
-    val name: String = ""
+annotation class Option(
+    val name: String = "",
+    val description: String = "",
 )
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class CommandButton(
+annotation class Button(
     val id: String = "",
-    val private: Boolean = false
 )

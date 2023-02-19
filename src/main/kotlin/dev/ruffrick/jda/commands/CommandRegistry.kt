@@ -1,9 +1,9 @@
 package dev.ruffrick.jda.commands
 
-import dev.ruffrick.jda.commands.mapping.MapperRegistry
+import dev.ruffrick.jda.commands.event.ButtonListener
+import dev.ruffrick.jda.commands.event.CommandListener
+import dev.ruffrick.jda.commands.mapping.Mapper
 import dev.ruffrick.jda.kotlinx.Logger
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.GuildChannel
@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.interactions.commands.Command.Choice
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
@@ -21,155 +22,127 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
-import net.dv8tion.jda.api.interactions.commands.Command as ICommand
 
 class CommandRegistry(
     val commands: List<SlashCommand>,
-    val mapperRegistry: MapperRegistry
+    val mappers: List<Mapper<Any, Any?>>,
 ) {
+    private var firstUpdate = true
 
     private val log by Logger
-    private val descriptions = Json.decodeFromString<Map<String, String>>(
-        this::class.java.getResourceAsStream("/lang/descriptions.json")?.bufferedReader().use { it?.readText() }
-            ?: throw IllegalArgumentException("Missing resource: path='/lang/descriptions.json'")
-    )
     private val optionTypes = mapOf(
         String::class to OptionType.STRING,
         Long::class to OptionType.INTEGER,
         Boolean::class to OptionType.BOOLEAN,
         User::class to OptionType.USER,
         GuildChannel::class to OptionType.CHANNEL,
-        Role::class to OptionType.ROLE
+        Role::class to OptionType.ROLE,
+        Double::class to OptionType.NUMBER,
     )
 
-    val commandsByName: Map<String, SlashCommand>
-    val commandsByKey: Map<String, Pair<KFunction<*>, List<String>>>
-    val buttonsByKey: Map<String, Pair<KFunction<*>, Boolean>>
+    internal val commandFunctions: Map<String, Pair<KFunction<*>, List<String>>>
+    internal val buttonFunctions: Map<String, KFunction<*>>
 
     init {
-        val commandsByName = mutableMapOf<String, SlashCommand>()
-        val commandsByKey = mutableMapOf<String, Pair<KFunction<*>, List<String>>>()
-        val buttonsByKey = mutableMapOf<String, Pair<KFunction<*>, Boolean>>()
+        val commandFunctions = mutableMapOf<String, Pair<KFunction<*>, List<String>>>()
+        val buttonFunctions = mutableMapOf<String, KFunction<*>>()
 
-        commands.forEach { slashCommand ->
-            val command = slashCommand::class.findAnnotation<Command>()
-                ?: throw IllegalArgumentException("${slashCommand::class.simpleName}: @Command annotation missing!")
+        for (command in commands) {
+            val commandAnnotation = command::class.findAnnotation<Command>()
+                ?: throw IllegalArgumentException("${command::class.simpleName}: @Command annotation missing!")
 
-            slashCommand.scope = command.scope
-            slashCommand.requiredPermissions = command.requiredPermissions
-            slashCommand.commandRegistry = this
 
-            val commandName = command.name.ifEmpty {
-                slashCommand::class.simpleName!!.removeSuffix("Command").lowercase()
+            val commandName = commandAnnotation.name.ifEmpty {
+                command::class.simpleName!!.removeSuffix("Command").lowercase()
             }
-            val commandData = CommandData(commandName, getDescription(commandName))
+            val commandData = CommandData(commandName, commandAnnotation.description.ifEmpty { commandName })
             val subcommandGroups = mutableListOf<SubcommandGroupData>()
 
-            slashCommand::class.memberFunctions.forEach { function ->
-                val baseCommand = function.findAnnotation<BaseCommand>()
-                val subcommand = function.findAnnotation<Subcommand>()
-                val commandButton = function.findAnnotation<CommandButton>()
-                when {
-                    baseCommand != null -> {
-                        val options = parseOptions(function, slashCommand::class, commandData.name)
-                        commandData.addOptions(options)
-                        commandsByKey[commandName] = function to options.map { it.name }
+            for (function in command::class.memberFunctions) {
+                function.findAnnotation<Command>()?.let {
+                    val options = parseOptions(function)
+                    commandData.addOptions(options)
+                    commandFunctions[commandName] = function to options.map { it.name }
+                } ?: function.findAnnotation<Subcommand>()?.let { subcommand ->
+                    val options = parseOptions(function)
+                    val subcommandName = subcommand.name.ifEmpty { function.name.lowercase() }
+                    if (subcommand.group.isNotEmpty()) {
+                        val subcommandGroupName = subcommand.group
+                        val subcommandData = SubcommandData(
+                            subcommandName,
+                            subcommand.description.ifEmpty { subcommandName }).addOptions(options)
+                        subcommandGroups.firstOrNull { subcommandGroupData ->
+                            subcommandGroupData.name == subcommandGroupName
+                        }?.addSubcommands(subcommandData) ?: subcommandGroups.add(
+                            SubcommandGroupData(subcommand.group,
+                                subcommand.groupDescription.ifEmpty { subcommandName }).addSubcommands(subcommandData)
+                        )
+                        commandFunctions["$commandName.$subcommandGroupName.$subcommandName"] =
+                            function to options.map { it.name }
+                    } else {
+                        commandData.addSubcommands(
+                            SubcommandData(subcommandName,
+                                subcommand.description.ifEmpty { subcommandName }).addOptions(options)
+                        )
+                        commandFunctions["$commandName.$subcommandName"] = function to options.map { it.name }
                     }
-                    subcommand != null -> {
-                        val name = subcommand.name.ifEmpty { function.name.lowercase() }
-                        if (subcommand.group.isNotEmpty()) {
-                            val group = subcommand.group
-                            val key = "$commandName.$group.$name"
-                            val options = parseOptions(function, slashCommand::class, key)
-                            val subcommandData = SubcommandData(name, getDescription(key)).addOptions(options)
-                            subcommandGroups.firstOrNull { subcommandGroupData ->
-                                subcommandGroupData.name == group
-                            }?.addSubcommands(subcommandData) ?: subcommandGroups.add(
-                                SubcommandGroupData(subcommand.group, getDescription("$commandName.$group"))
-                                    .addSubcommands(subcommandData)
-                            )
-                            commandsByKey[key] = function to options.map { it.name }
-                        } else {
-                            val key = "$commandName.$name"
-                            val options = parseOptions(function, slashCommand::class, key)
-                            val subcommandData = SubcommandData(name, getDescription(key)).addOptions(options)
-                            commandData.addSubcommands(subcommandData)
-                            commandsByKey[key] = function to options.map { it.name }
+                } ?: function.findAnnotation<Button>()?.let { button ->
+                    for (i in 1 until function.parameters.size) {
+                        val parameter = function.parameters[i]
+                        val type = parameter.type.classifier as KClass<*>
+                        require(type == ButtonClickEvent::class || mappers.any { it.input == ButtonClickEvent::class && it.output == type }) {
+                            "No ButtonEventMapper found for type ${type.qualifiedName}"
                         }
                     }
-                    commandButton != null -> {
-                        for (i in 1 until function.parameters.size) {
-                            val parameter = function.parameters[i]
-                            val type = parameter.type.classifier as KClass<*>
-                            require(
-                                type == ButtonClickEvent::class ||
-                                        mapperRegistry.buttonEventMappers.containsKey(type)
-                            ) { "No ButtonEventMapper found for type ${type.qualifiedName}" }
-                        }
-                        val id = commandButton.id.ifEmpty { function.name.lowercase() }
-                        buttonsByKey["$commandName.$id"] = function to commandButton.private
-                    }
+                    buttonFunctions["$commandName.${button.id.ifEmpty { function.name.lowercase() }}"] = function
                 }
             }
-            if (subcommandGroups.isNotEmpty()) commandData.addSubcommandGroups(subcommandGroups)
-
-            slashCommand.commandData = commandData
-
-            commandsByName[commandName] = slashCommand
+            if (subcommandGroups.isNotEmpty()) {
+                commandData.addSubcommandGroups(subcommandGroups)
+            }
+            command.commandRegistry = this
+            command.commandData = commandData
         }
 
-        this.commandsByName = commandsByName
-        this.commandsByKey = commandsByKey
-        this.buttonsByKey = buttonsByKey
+        this.commandFunctions = commandFunctions
+        this.buttonFunctions = buttonFunctions
 
-        log.info("Registered ${commands.size} commands and ${buttonsByKey.size} buttons")
+        log.info("Registered ${commandFunctions.size} commands and ${buttonFunctions.size} buttons")
     }
 
-    private fun getDescription(key: String): String {
-        return descriptions[key] ?: throw IllegalArgumentException("Missing description: key='$key'")
-    }
-
-    private fun parseOptions(
-        function: KFunction<*>,
-        `class`: KClass<out SlashCommand>,
-        root: String
-    ): List<OptionData> {
+    private fun parseOptions(function: KFunction<*>): List<OptionData> {
         val options = mutableListOf<OptionData>()
         var allowNonOptions = true
         for (i in 1 until function.parameters.size) {
             val parameter = function.parameters[i]
             val type = parameter.type.classifier as KClass<*>
-            val commandOption = parameter.findAnnotation<CommandOption>()
-            if (commandOption == null) {
+            val option = parameter.findAnnotation<Option>()
+            if (option == null) {
                 require(allowNonOptions) {
-                    "${`class`.qualifiedName}: Parameter ${parameter.name} in function " +
-                            "${function.name} must be annotated as @CommandOption!"
+                    "Parameter ${parameter.name} in function " + "${function.name} must be annotated as @CommandOption!"
                 }
-                require(type == SlashCommandEvent::class || mapperRegistry.commandEventMappers.containsKey(type)) {
-                    "No CommandEventMapper found for type ${type.qualifiedName}"
+                require(type == SlashCommandEvent::class || mappers.any { it.input == SlashCommandEvent::class && it.output == type }) {
+                    "Mapper<SlashCommandEvent, ${type.simpleName}> not found"
                 }
             } else {
                 allowNonOptions = false
-                val name = commandOption.name.ifEmpty { parameter.name!!.lowercase() }
+                val name = option.name.ifEmpty { parameter.name!!.lowercase() }
                 if (type.java.isEnum) {
                     options.add(
                         OptionData(
-                            OptionType.STRING, name, getDescription("$root.$name"), !parameter.type.isMarkedNullable
-                        ).addChoices(
-                            type.java.enumConstants.map { ICommand.Choice(it.toString(), (it as Enum<*>).name) }
-                        )
+                            OptionType.STRING,
+                            name,
+                            option.description.ifEmpty { name },
+                            !parameter.type.isMarkedNullable
+                        ).addChoices(type.java.enumConstants.map { Choice(it.toString(), (it as Enum<*>).name) })
                     )
                 } else {
-                    val optionType = optionTypes[type]
-                        ?: mapperRegistry.stringMappers[type]?.let { OptionType.STRING }
-                        ?: mapperRegistry.longMappers[type]?.let { OptionType.INTEGER }
-                        ?: mapperRegistry.booleanMappers[type]?.let { OptionType.BOOLEAN }
-                        ?: mapperRegistry.userMappers[type]?.let { OptionType.USER }
-                        ?: mapperRegistry.channelMappers[type]?.let { OptionType.CHANNEL }
-                        ?: mapperRegistry.roleMappers[type]?.let { OptionType.ROLE }
-                        ?: throw IllegalArgumentException("No Mapper found for type ${type.qualifiedName}")
+                    val optionType = optionTypes[type] ?: mappers.firstOrNull { it.output == type }?.type
+                    ?: throw IllegalArgumentException("Mapper<?, ${type.simpleName}> not found")
                     options.add(
-                        OptionData(optionType, name, getDescription("$root.$name"), !parameter.type.isMarkedNullable)
+                        OptionData(
+                            optionType, name, option.description.ifEmpty { name }, !parameter.type.isMarkedNullable
+                        )
                     )
                 }
             }
@@ -177,22 +150,32 @@ class CommandRegistry(
         return options
     }
 
+    fun command(name: String) = commands.firstOrNull { it.commandData.name == name }
+
+    suspend inline fun <reified S : Any> transform(value: S, type: KClass<*>) =
+        mappers.first { it.input == S::class && it.output == type }.transform(value)
+
     fun updateCommands(shardManager: ShardManager) {
-        shardManager.shardCache.forEach {
-            updateCommands(it)
+        if (firstUpdate) {
+            firstUpdate = false
+            shardManager.addEventListener(CommandListener(this), ButtonListener(this))
         }
+        shardManager.shardCache.forEach { updateCommands(it) }
     }
 
     fun updateCommands(jda: JDA) {
-        jda.updateCommands()
-            .addCommands(commands.map { it.commandData })
-            .queue()
+        if (firstUpdate) {
+            firstUpdate = false
+            jda.addEventListener(CommandListener(this), ButtonListener(this))
+        }
+        jda.updateCommands().addCommands(commands.map { it.commandData }).queue()
     }
 
     fun updateCommands(guild: Guild) {
-        guild.updateCommands()
-            .addCommands(commands.map { it.commandData })
-            .queue()
+        if (firstUpdate) {
+            firstUpdate = false
+            guild.jda.addEventListener(CommandListener(this), ButtonListener(this))
+        }
+        guild.updateCommands().addCommands(commands.map { it.commandData }).queue()
     }
-
 }

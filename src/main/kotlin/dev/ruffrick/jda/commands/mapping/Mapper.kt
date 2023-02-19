@@ -3,27 +3,29 @@ package dev.ruffrick.jda.commands.mapping
 import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.interactions.commands.OptionType
+import kotlin.reflect.KClass
+import kotlin.reflect.full.memberFunctions
 
 interface Mapper<S, T> {
 
     suspend fun transform(value: S): T
 
+    val input: KClass<*>
+        get() = this::class.memberFunctions.first { it.name == "transform" }.parameters[1].type.classifier as KClass<*>
+
+    val output: KClass<*>
+        get() = this::class.memberFunctions.first { it.name == "transform" }.returnType.classifier as KClass<*>
+
+    val type: OptionType
+        get() = when (input) {
+            String::class -> OptionType.STRING
+            Long::class -> OptionType.INTEGER
+            Boolean::class -> OptionType.BOOLEAN
+            User::class -> OptionType.USER
+            GuildChannel::class -> OptionType.CHANNEL
+            Role::class -> OptionType.ROLE
+            Double::class -> OptionType.NUMBER
+            else -> throw IllegalArgumentException("Invalid input type: ${input.qualifiedName}")
+        }
 }
-
-interface StringMapper<T> : Mapper<String, T>
-
-interface LongMapper<T> : Mapper<Long, T>
-
-interface BooleanMapper<T> : Mapper<Boolean, T>
-
-interface UserMapper<T> : Mapper<User, T>
-
-interface ChannelMapper<T> : Mapper<GuildChannel, T>
-
-interface RoleMapper<T> : Mapper<Role, T>
-
-interface CommandEventMapper<T> : Mapper<SlashCommandEvent, T>
-
-interface ButtonEventMapper<T> : Mapper<ButtonClickEvent, T>
