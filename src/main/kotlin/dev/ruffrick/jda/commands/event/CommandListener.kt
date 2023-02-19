@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.GenericEvent
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import kotlin.reflect.KClass
 import kotlin.reflect.full.callSuspend
@@ -19,7 +19,7 @@ internal class CommandListener(
 ) : SuspendEventListener() {
 
     override suspend fun onEvent(event: GenericEvent) {
-        if (event !is SlashCommandEvent) return
+        if (event !is SlashCommandInteractionEvent) return
 
         val id = when {
             event.subcommandGroup != null -> "${event.name}.${event.subcommandGroup}.${event.subcommandName}"
@@ -35,7 +35,7 @@ internal class CommandListener(
             val parameterOffset = function.parameters.size - options.size
             val eventArgs = Array(parameterOffset - 1) { i ->
                 val type = function.parameters[i + 1].type.classifier as KClass<*>
-                if (type == SlashCommandEvent::class) {
+                if (type == SlashCommandInteractionEvent::class) {
                     event
                 } else {
                     commandRegistry.transform(event, type)

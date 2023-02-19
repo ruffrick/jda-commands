@@ -5,7 +5,7 @@ package dev.ruffrick.jda.commands
 import dev.ruffrick.jda.kotlinx.Logger
 import net.dv8tion.jda.api.entities.Emoji
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
-import net.dv8tion.jda.api.interactions.components.Button
+import net.dv8tion.jda.api.interactions.components.buttons.Button
 
 abstract class SlashCommand {
     lateinit var commandRegistry: CommandRegistry
