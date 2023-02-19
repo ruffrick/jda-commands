@@ -133,12 +133,12 @@ class MoodCommand : SlashCommand() {
     }
 
     @CommandButton(private = true)
-    fun good(event: ButtonClickEvent, userId: Long) {
+    fun good(event: ButtonClickEvent) {
         event.editMessage("That's good to hear!").setActionRows().queue()
     }
 
     @CommandButton(private = true)
-    fun bad(event: ButtonClickEvent, userId: Long) {
+    fun bad(event: ButtonClickEvent) {
         event.editMessage("Oh no! Here, have some \uD83C\uDF68!").setActionRows().queue()
     }
 
@@ -148,6 +148,61 @@ class MoodCommand : SlashCommand() {
 The `private` field in the annotation restricts the button to only be usable by the original author of the command if
 set to true (defaults to false). The supplied `userId` is the ID of the original author. Registering buttons doesn't
 require any additional setup, other than registering the command they belong to as described above.
+
+### Type Mapping
+
+You can add support for custom types for both commands end buttons.
+
+```kotlin
+class DurationMapper : StringMapper<Duration> {
+
+    private val pattern = Regex("^(\\d+)([dhms])\$").toPattern()
+
+    override suspend fun transform(value: String): Duration {
+        val matcher = pattern.matcher(value.lowercase())
+        require(matcher.matches()) { "Please enter a duration, e. g. `1h` or `3d`!" }
+        val count = matcher.group(1).toInt()
+        require(count > 0) { "Your duration can't be less than one!" }
+
+        return when (matcher.group(2)) {
+            "d" -> Duration.days(count)
+            "h" -> Duration.hours(count)
+            "m" -> Duration.minutes(count)
+            "s" -> Duration.seconds(count)
+            else -> throw IllegalStateException("How did we get here?")
+        }
+    }
+
+}
+```
+
+There are mapper interfaces for all supported option types: `StringMapper`, `LongMapper`, `BooleanMapper`, `UserMapper`,
+`ChannelMapper`, `RoleMapper`, as well as CommandEventMapper and ButtonEventMapper. These take their respective types as
+input and return a custom type specified by the generic type parameter. If you use package scanning to register your
+commands, any Mappers in the specified package will be automatically registered as well. Otherwise, you can pass a
+MapperRegistry instance to `registerCommands()`.
+
+The option type for custom types is determined from the type of mapper used, i.e., a type that is mappable by a
+BooleanMapper is registered as a boolean option. For non-option function arguments, an EventMapper must be specified for
+the respective event (Command-/ButtonEventMapper).
+
+```kotlin
+@BaseCommand
+fun command(
+    context: CommandContext, // This looks for a CommandEventMapper for CommandContext
+    @CommandOption duration: Duration // This looks for some mapper for Duration
+) {
+    // ...
+}
+
+@CommandButton
+fun button(
+    context: ButtonContext, // This looks for a ButtonEventMapper for ButtonContext
+    someNumber: Long // This looks for a ButtonEventMapper for Long
+) {
+    // ...
+}
+```
 
 ## Download
 
