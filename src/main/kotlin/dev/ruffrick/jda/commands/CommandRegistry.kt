@@ -101,8 +101,8 @@ class CommandRegistry(
                 commandData.addSubcommandGroups(subcommandGroups)
             }
 
-            if (command::class.hasAnnotation<Permissions>()) {
-                commandData.defaultPermissions = DefaultMemberPermissions.enabledFor(*command::class.findAnnotation<Permissions>()!!.permissions)
+            command::class.findAnnotation<Permissions>()?.let {
+                commandData.defaultPermissions = DefaultMemberPermissions.enabledFor(*it.permissions)
             }
 
             command.commandRegistry = this
