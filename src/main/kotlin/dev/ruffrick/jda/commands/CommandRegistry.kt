@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package dev.ruffrick.jda.commands
 
 import dev.ruffrick.jda.commands.event.ButtonListener
