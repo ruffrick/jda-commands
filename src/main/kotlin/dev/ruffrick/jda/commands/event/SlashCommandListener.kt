@@ -111,12 +111,8 @@ internal class SlashCommandListener(
             function.callSuspend(command, *eventArgs, *optionArgs)
         }
 
-        log.debug(
-            "Executed command: " +
-                    "key='$key', " +
-                    "userId='${event.user.id}', " +
-                    "guildId='${event.guild?.id ?: -1}', " +
-                    "durationMs='$duration'"
+        log.info(
+            "Executing command '$key' took $duration ms (userId: ${event.user.id}, guildId: ${event.guild?.id ?: -1})"
         )
     }
 
