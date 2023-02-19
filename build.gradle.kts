@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    kotlin("jvm") version "1.6.20"
+    kotlin("jvm") version "1.8.10"
 
     `maven-publish`
 }
@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
 
     // https://mvnrepository.com/artifact/net.dv8tion/JDA
     compileOnly("net.dv8tion:JDA:5.0.0-beta.3")
