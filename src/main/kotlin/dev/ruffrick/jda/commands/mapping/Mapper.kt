@@ -1,6 +1,7 @@
 package dev.ruffrick.jda.commands.mapping
 
 import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -25,6 +26,7 @@ interface Mapper<S, T> {
             User::class -> OptionType.USER
             GuildChannel::class -> OptionType.CHANNEL
             Role::class -> OptionType.ROLE
+            IMentionable::class -> OptionType.MENTIONABLE
             Double::class -> OptionType.NUMBER
             else -> throw IllegalArgumentException("Invalid input type: ${input.qualifiedName}")
         }
