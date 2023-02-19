@@ -23,15 +23,12 @@ import net.dv8tion.jda.api.sharding.ShardManager
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberFunctions
 
 class CommandRegistry(
     val commands: List<SlashCommand>,
     val mappers: List<Mapper<Any, Any?>>,
 ) {
-    private var firstUpdate = true
-
     private val log by LogFactory
     private val optionTypes = mapOf(
         String::class to OptionType.STRING,
@@ -161,32 +158,26 @@ class CommandRegistry(
         mappers.first { it.input == S::class && it.output == type }.transform(value)
 
     fun updateCommands(shardManager: ShardManager) {
-        if (firstUpdate) {
-            firstUpdate = false
-            shardManager.addEventListener(
-                SlashCommandInteractionListener(this), ButtonInteractionListener(this)
-            )
-        }
         shardManager.shardCache.forEach { updateCommands(it) }
     }
 
     fun updateCommands(jda: JDA) {
-        if (firstUpdate) {
-            firstUpdate = false
-            jda.addEventListener(
-                SlashCommandInteractionListener(this), ButtonInteractionListener(this)
-            )
-        }
+        registerListeners(jda)
         jda.updateCommands().addCommands(commands.map { it.commandData }).queue()
     }
 
     fun updateCommands(guild: Guild) {
-        if (firstUpdate) {
-            firstUpdate = false
-            guild.jda.addEventListener(
-                SlashCommandInteractionListener(this), ButtonInteractionListener(this)
-            )
-        }
+        registerListeners(guild.jda)
         guild.updateCommands().addCommands(commands.map { it.commandData }).queue()
+    }
+
+    private fun registerListeners(jda: JDA) {
+        val listeners = jda.eventManager.registeredListeners
+        if (listeners.none { it is SlashCommandInteractionListener }) {
+            jda.addEventListener(SlashCommandInteractionListener(this))
+        }
+        if (listeners.none { it is ButtonInteractionListener }) {
+            jda.addEventListener(ButtonInteractionListener(this))
+        }
     }
 }
