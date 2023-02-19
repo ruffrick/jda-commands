@@ -2,6 +2,7 @@ package dev.ruffrick.jda.commands.processor.util
 
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSType
+import dev.ruffrick.jda.commands.api.SlashCommand
 import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
@@ -22,7 +23,8 @@ data class KSTypes(
     val mentionableType: KSType,
     val attachmentType: KSType,
     val commandEventType: KSType,
-    val buttonEventType: KSType
+    val buttonEventType: KSType,
+    val slashCommandType: KSType
 ) {
     constructor(resolver: Resolver) : this(
         resolver.builtIns.stringType,
@@ -36,6 +38,7 @@ data class KSTypes(
         resolver.getClassDeclaration<IMentionable>(),
         resolver.getClassDeclaration<Message.Attachment>(),
         resolver.getClassDeclaration<SlashCommandInteractionEvent>(),
-        resolver.getClassDeclaration<ButtonInteractionEvent>()
+        resolver.getClassDeclaration<ButtonInteractionEvent>(),
+        resolver.getClassDeclaration<SlashCommand>()
     )
 }
