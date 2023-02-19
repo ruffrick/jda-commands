@@ -49,7 +49,7 @@ class HelloCommand : SlashCommand() {
 
 Command options can be added by adding parameters to the function and annotating them as `@CommandOption`. Nullable
 parameters will be registered as optional arguments, non-nullable parameters as required arguments. Allowed types are
-`String`, `Long`, `Boolean`, `User`, `AbstractChannel` and `Role`.
+`String`, `Long`, `Boolean`, `User`, `GuildChannel` and `Role`.
 
 ```kotlin
 @Command
