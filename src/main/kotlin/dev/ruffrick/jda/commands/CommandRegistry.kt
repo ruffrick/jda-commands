@@ -48,7 +48,9 @@ class CommandRegistry(private val commands: List<SlashCommand>) {
             slashCommand.requiredPermissions = command.requiredPermissions
             slashCommand.commandRegistry = this
 
-            val commandName = command.name.ifEmpty { slashCommand::class.simpleName!!.removeSuffix("Command").lowercase() }
+            val commandName = command.name.ifEmpty {
+                slashCommand::class.simpleName!!.removeSuffix("Command").lowercase()
+            }
             val commandData = CommandData(commandName, getDescription(commandName))
             val subcommandGroups = mutableListOf<SubcommandGroupData>()
 
@@ -78,26 +80,27 @@ class CommandRegistry(private val commands: List<SlashCommand>) {
                         } else {
                             val root = "$commandName.$name"
                             val options = parseOptions(function, slashCommand, root)
-                            val subcommandData = SubcommandData(name, getDescription(root))
-                                .addOptions(options)
+                            val subcommandData = SubcommandData(name, getDescription(root)).addOptions(options)
                             commandData.addSubcommands(subcommandData)
                             commandsByKey[root] = function to options.map { it.type to it.name }
                         }
                     }
                     function.hasAnnotation<CommandButton>() -> {
                         require(function.parameters.size == 3) {
-                            "Function ${function.name} in class ${slashCommand::class.simpleName} must have 2 arguments of " +
-                                    "type (ButtonClickEvent, Long)!"
+                            "Function ${function.name} in class ${slashCommand::class.simpleName} must have 2 " +
+                                    "arguments of type (ButtonClickEvent, Long)!"
                         }
-                        val classifier1 = function.parameters[1].type.classifier
+                        val parameter1 = function.parameters[1]
+                        val classifier1 = parameter1.type.classifier
                         require(classifier1 == ButtonClickEvent::class) {
-                            "Parameter ${function.parameters[1].name} in function ${function.name} in class " +
-                                    "${slashCommand::class.simpleName} must be of type ButtonClickEvent but is of type " +
-                                    "${(classifier1 as KClass<*>).simpleName}!"
+                            "Parameter ${parameter1.name} in function ${function.name} in class " +
+                                    "${slashCommand::class.simpleName} must be of type ButtonClickEvent but is of " +
+                                    "type ${(classifier1 as KClass<*>).simpleName}!"
                         }
-                        val classifier2 = function.parameters[2].type.classifier
+                        val parameter2 = function.parameters[2]
+                        val classifier2 = parameter2.type.classifier
                         require(classifier2 == Long::class) {
-                            "Parameter ${function.parameters[2].name} in function ${function.name} in class " +
+                            "Parameter ${parameter2.name} in function ${function.name} in class " +
                                     "${slashCommand::class.simpleName} must be of type Long but is of type " +
                                     "${(classifier2 as KClass<*>).simpleName}!"
                         }
@@ -138,8 +141,9 @@ class CommandRegistry(private val commands: List<SlashCommand>) {
                     }
                     val type = requireNotNull(optionTypes[classifier]) {
                         "Parameter ${parameter.name} in function ${function.name} in class " +
-                                "${command::class.simpleName} must not be of type " +
-                                "${(classifier as KClass<*>).simpleName}!"
+                                "${command::class.simpleName} must be of type ${
+                                    optionTypes.keys.joinToString { it.simpleName!! }
+                                } but is of type ${(classifier as KClass<*>).simpleName}!"
                     }
                     val name = commandOption.name.ifEmpty { parameter.name!!.lowercase() }
                     options.add(

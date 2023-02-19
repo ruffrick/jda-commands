@@ -71,14 +71,14 @@ class GreetCommand : SlashCommand() {
 }
 ```
 
-To register the commands, call `registerCommands()` on your JDA od ShardManager instance. This function takes either a
-list of commands, or a package name and an optional ClassLoader, in which case the package is scanned for Classes
-annotated as `@Command`, which are then instantiated. **This only works for commands which don't require any constructor
-parameters!** The commands are then scanned for functions annotated as either `@BaseCommand` or `@SubCommand`, which are
-then registered as commands based on their annotations and parameters. This also calls `updateCommands()` with the
-registered commands on the JDA or ShardManager instance this was called on after registering the commands. The function
-returns a CommandRegistry instance containing the registered commands, which can be used to register the commands in a
-guild for development purposes.
+To register the commands, call `registerCommands()` on your JDA or ShardManager instance. This function takes either a
+list of commands, or a package name and an optional ClassLoader, in which case the package is scanned for classes
+annotated as `@Command`, which are then instantiated. **This only works for classes which don't require any constructor
+parameters!**
+
+After registering the commands, this calls `updateCommands()` on the JDA or ShardManager instance it was called on. The
+function returns a CommandRegistry instance containing the registered commands, which can be used to register the
+commands in a guild for development purposes.
 
 ```kotlin
 fun main() {
