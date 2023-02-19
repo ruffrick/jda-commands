@@ -18,9 +18,9 @@ internal class ButtonInteractionListener(
 
         val commandName = event.componentId.substringBefore('.')
         val command = commandRegistry.command(commandName)
-            ?: throw IllegalArgumentException("Unknown button: id='${event.componentId}'")
+            ?: throw IllegalArgumentException("Unknown button ${event.componentId}")
         val function = commandRegistry.buttonFunctions[event.componentId]
-            ?: throw IllegalArgumentException("Unknown button: id='${event.componentId}'")
+            ?: throw IllegalArgumentException("Unknown button ${event.componentId}")
 
         val duration = measureTimeMillis {
             val args = Array(function.parameters.size - 1) { i ->
@@ -40,9 +40,7 @@ internal class ButtonInteractionListener(
             function.callSuspend(command, *args)
         }
 
-        log.info(
-            "Handling button '${event.componentId}' took $duration ms (userId: ${event.user.id}, guildId: ${event.guild?.id ?: -1})"
-        )
+        log.info("Button ${event.componentId} handled durationMs=$duration userId=${event.user.id} guildId=${event.guild?.id ?: -1}")
     }
 
 }

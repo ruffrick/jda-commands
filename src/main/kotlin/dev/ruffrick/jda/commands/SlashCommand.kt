@@ -2,7 +2,7 @@
 
 package dev.ruffrick.jda.commands
 
-import dev.ruffrick.jda.kotlinx.Logger
+import dev.ruffrick.jda.kotlinx.LogFactory
 import net.dv8tion.jda.api.entities.Emoji
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.privileges.CommandPrivilege
@@ -13,7 +13,7 @@ abstract class SlashCommand {
     internal lateinit var commandData: CommandData
     internal lateinit var commandPrivileges: Map<Long, List<CommandPrivilege>>
 
-    protected val log by Logger
+    protected val log by LogFactory
 
     protected fun Btn(id: String, label: String) = Btn("${commandData.name}.$id", label, null)
     protected fun Btn(id: String, emoji: Emoji) = Btn("${commandData.name}.$id", null, emoji)
