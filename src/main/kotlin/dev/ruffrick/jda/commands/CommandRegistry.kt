@@ -9,9 +9,11 @@ import dev.ruffrick.jda.commands.mapping.Mapper
 import dev.ruffrick.jda.kotlinx.LogFactory
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
@@ -21,6 +23,7 @@ import net.dv8tion.jda.api.sharding.ShardManager
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberFunctions
 
 class CommandRegistry(
@@ -35,7 +38,7 @@ class CommandRegistry(
         Long::class to OptionType.INTEGER,
         Boolean::class to OptionType.BOOLEAN,
         User::class to OptionType.USER,
-        GuildChannel::class to OptionType.CHANNEL,
+        Channel::class to OptionType.CHANNEL,
         Role::class to OptionType.ROLE,
         IMentionable::class to OptionType.MENTIONABLE,
         Double::class to OptionType.NUMBER,
@@ -97,7 +100,11 @@ class CommandRegistry(
             if (subcommandGroups.isNotEmpty()) {
                 commandData.addSubcommandGroups(subcommandGroups)
             }
-            commandData.isDefaultEnabled = commandAnnotation.enabled
+
+            if (command::class.hasAnnotation<Permissions>()) {
+                commandData.defaultPermissions = DefaultMemberPermissions.enabledFor(*command::class.findAnnotation<Permissions>()!!.permissions)
+            }
+
             command.commandRegistry = this
             command.commandData = commandData
 
