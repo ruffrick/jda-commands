@@ -102,6 +102,10 @@ class CommandRegistry(
                 commandData.defaultPermissions = DefaultMemberPermissions.enabledFor(*it.permissions)
             }
 
+            command::class.findAnnotation<GuildOnly>()?.let {
+                commandData.setGuildOnly(true)
+            }
+
             command.commandRegistry = this
             command.commandData = commandData
 
