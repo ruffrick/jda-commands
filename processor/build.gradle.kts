@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.9.0"
 
     `maven-publish`
 }
@@ -19,16 +19,16 @@ dependencies {
     implementation(project(":api"))
 
     // https://mvnrepository.com/artifact/com.google.devtools.ksp/symbol-processing-api
-    implementation("com.google.devtools.ksp:symbol-processing-api:1.8.10-1.0.9")
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.9.0-1.0.11")
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
-    implementation("com.squareup:kotlinpoet:1.12.0")
+    implementation("com.squareup:kotlinpoet:1.14.2")
 
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet-ksp
-    implementation("com.squareup:kotlinpoet-ksp:1.12.0")
+    implementation("com.squareup:kotlinpoet-ksp:1.14.2")
 
     // https://mvnrepository.com/artifact/net.dv8tion/JDA
-    implementation("net.dv8tion:JDA:5.0.0-beta.3")
+    implementation("net.dv8tion:JDA:5.0.0-beta.12")
 }
 
 tasks.withType<KotlinCompile> {
