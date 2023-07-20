@@ -23,7 +23,7 @@ dependencies {
     compileOnly("net.dv8tion:JDA:5.0.0-beta.12")
 
     // https://github.com/ruffrick/jda-kotlinx
-    api("com.github.ruffrick:jda-kotlinx:9c48cfb")
+    api("com.github.ruffrick:jda-kotlinx:b101ea7")
 }
 
 tasks.withType<KotlinCompile> {
