@@ -17,8 +17,7 @@ internal class ButtonInteractionListener(
         if (event !is ButtonInteractionEvent) return
 
         val commandName = event.componentId.substringBefore('.')
-        val command = commandRegistry.command(commandName)
-            ?: throw IllegalArgumentException("Unknown button ${event.componentId}")
+        val command = commandRegistry.command(commandName) ?: return
         val function = commandRegistry.buttonFunctions[event.componentId]
             ?: throw IllegalArgumentException("Unknown button ${event.componentId}")
 
